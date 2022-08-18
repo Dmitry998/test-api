@@ -5,6 +5,7 @@ import { TagModule } from './tag/tag.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './user/entities/user.entity';
 import { Tag } from './tag/entities/tag.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
     imports: [
@@ -30,7 +31,8 @@ import { Tag } from './tag/entities/tag.entity';
             },
         }),
         UserModule,
-        TagModule
+        TagModule,
+        AuthModule
     ],
     controllers: [],
     providers: [],
