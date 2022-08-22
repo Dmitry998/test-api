@@ -1,26 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
+import * as bcryptjs from 'bcryptjs';
+import { GetUserDto } from './dto/get-user.dto';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
 
-  findAll() {
-    return `This action returns all user`;
-  }
+    constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+    ) { }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+    public async findAll(): Promise<User[]> {
+        const users = this.userRepository.find({ relations: ['tags'] });
+        return users;
+    }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+    public async findUserByUid(uid: string): Promise<GetUserDto> {
+        const user = await this.userRepository.findOne({
+            relations: ['tags'],
+            where: { uid: uid }
+        });
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+        const dto: GetUserDto = new GetUserDto();
+        return dto.convertFromEntity(user);
+    }
+
+    public async update(updateUserDto: UpdateUserDto, uid: string){
+        const user = await this.userRepository.findOneBy({uid: uid});
+        if(!user){
+            throw new HttpException('Пользователя не существует', HttpStatus.NOT_FOUND);
+        }
+        if(updateUserDto.password){
+            updateUserDto.password = await this.hashPassword(updateUserDto.password);
+        }
+        
+        const dto: GetUserDto = new GetUserDto();
+        return dto.convertFromEntity(await this.userRepository.save({ ...user, ...updateUserDto }));
+    }
+
+    public async createUser(createUser: CreateUserDto): Promise<User> {
+
+        createUser.password = await this.hashPassword(createUser.password);
+
+        const user = await this.userRepository.create(createUser);
+        return await this.userRepository.save(user);
+    }
+
+    public async deleteUser(uid: string): Promise<void> {
+        await this.userRepository.delete({ uid: uid });
+        //плюс надо разлогинить
+    }
+
+    public async findUserByEmail(email: string): Promise<User> {
+        const user = await this.userRepository.findOneBy({ email: email });
+        return user;
+    }
+
+    public async findUserByNickname(nickname: string): Promise<User> {
+        const user = await this.userRepository.findOneBy({ nickname: nickname });
+        return user;
+    }
+
+    private async hashPassword(password: string, salt=5): Promise<string> {
+        const hashPassword = await bcryptjs.hash(password, 5);
+        return hashPassword;
+    }
 }

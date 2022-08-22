@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, UseGuards, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { User } from './entities/user.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-suth.guard';
+import { AuthUser } from './user.decorator';
 
+@ApiTags('Пользователи')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) { }
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
+    // @ApiOperation({ summary: 'Создание нового пользователя' })
+    // @ApiResponse({ status: HttpStatus.CREATED, type: User })
+    // @Post()
+    // create(@Body() createUserDto: CreateUserDto) {
+    //     return this.userService.createUser(createUserDto);
+    // }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
+    @ApiOperation({ summary: 'Получение авторизованного пользователя' })
+    @Get()
+    findOne(@AuthUser() user: User) {
+        return this.userService.findUserByUid(user.uid);
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
+    @ApiOperation({ summary: 'Обновление авторизованного пользователя' })
+    @Put()
+    update(@Body() updateUser: UpdateUserDto, @AuthUser() authUser: User) {
+        return this.userService.update(updateUser, authUser.uid);
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
-  }
+    // @Patch(':id')
+    // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    //   return this.userService.update(+id, updateUserDto);
+    // }
+
+    // @Delete(':id')
+    // remove(@Param('id') id: string) {
+    //   return this.userService.remove(+id);
+    // }
 }
