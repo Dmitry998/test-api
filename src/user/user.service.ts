@@ -20,14 +20,17 @@ export class UserService {
         return users;
     }
 
-    public async findUserByUid(uid: string): Promise<GetUserDto> {
+    public async findUserByUid(uid: string): Promise<User> {
         const user = await this.userRepository.findOne({
             relations: ['tags'],
             where: { uid: uid }
         });
 
-        const dto: GetUserDto = new GetUserDto();
-        return dto.convertFromEntity(user);
+        if(!user){
+            throw new HttpException('Пользователя не существует', HttpStatus.NOT_FOUND);
+        }
+
+        return user;
     }
 
     public async update(updateUserDto: UpdateUserDto, uid: string){
@@ -35,6 +38,16 @@ export class UserService {
         if(!user){
             throw new HttpException('Пользователя не существует', HttpStatus.NOT_FOUND);
         }
+
+        let existingUser = await this.findUserByEmail(updateUserDto.email);
+        if (existingUser) {
+            throw new HttpException('Пользователь с таким email уже существует', HttpStatus.BAD_REQUEST);
+        }
+        existingUser = await this.findUserByNickname(updateUserDto.nickname);
+        if (existingUser) {
+            throw new HttpException('Пользователь с таким nickname уже существует', HttpStatus.BAD_REQUEST);
+        }
+
         if(updateUserDto.password){
             updateUserDto.password = await this.hashPassword(updateUserDto.password);
         }
@@ -67,7 +80,7 @@ export class UserService {
     }
 
     private async hashPassword(password: string, salt=5): Promise<string> {
-        const hashPassword = await bcryptjs.hash(password, 5);
+        const hashPassword = await bcryptjs.hash(password, salt);
         return hashPassword;
     }
 }

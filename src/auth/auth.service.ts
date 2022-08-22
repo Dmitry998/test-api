@@ -6,6 +6,7 @@ import { TokenDto } from './dto/token.dto';
 import { User } from 'src/user/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import * as bcryptjs from 'bcryptjs';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +41,8 @@ export class AuthService {
         return this.generateToken(user);
     }
 
-    public async logout(): Promise<void> {
+    public async logout(response: Response): Promise<void> {
+        response.clearCookie('jwt');
     }
 
 

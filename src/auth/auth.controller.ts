@@ -1,6 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Res, UsePipes } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Response, response } from 'express';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { ValidationUser } from 'src/user/pipes/validation-user.pipe';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
@@ -9,6 +11,7 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    @UsePipes(ValidationUser)
     @Post('signin')
     signin(@Body() createUserDto: CreateUserDto) {
         return this.authService.signin(createUserDto);
@@ -20,7 +23,7 @@ export class AuthController {
     }
 
     @Post('logout')
-    logout() {
-        return this.authService.logout();
+    logout(@Res() response: Response) {
+        return this.authService.logout(response);
     }
 }
