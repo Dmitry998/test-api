@@ -28,7 +28,7 @@ export class UserController {
     @Get()
     async findOne(@AuthUser() user: User) {
         const findUser = await this.userService.findUserByUid(user.uid)
-        const dto: GetUserDto = new GetUserDto();
+        const dto = new GetUserDto();
         return dto.convertFromEntity(findUser);
     }
 
@@ -40,6 +40,7 @@ export class UserController {
     }
 
     @Delete()
+    @ApiOperation({ summary: 'Удаление авторизованного пользователя' })
     delete(@AuthUser() user: User){
         return this.userService.deleteUser(user.uid);
     }
