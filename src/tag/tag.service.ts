@@ -6,6 +6,9 @@ import { Repository } from 'typeorm';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { GetTagByIdDto } from './dto/get-tag-by-id.dto';
 import { GetTagDto } from './dto/get-tag.dto';
+import { PageMetaDto } from './dto/page-meta.dto';
+import { PageOptionsDto } from './dto/page-options.dto';
+import { PageDto } from './dto/page.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { Tag } from './entities/tag.entity';
 
@@ -46,11 +49,63 @@ export class TagService {
         return dto.convertFromEntity(tag);
     }
 
-    async getAll(sortByOrder, sortByName, offset, length){
-        console.log(sortByOrder);
-        console.log(sortByName);
-        console.log(offset);
-        console.log(length);
+    async getAll(pageOptionsDto: PageOptionsDto) {
+
+        // const totalCount = (await this.tagRepository.find()).length;
+
+        // const tags = await this.tagRepository.find({
+        //     relations: ['user'],
+        //     take: pageOptionsDto.pageSize,
+        //     skip: pageOptionsDto.skip,
+        //     order: {
+
+        //     }
+        // });
+
+
+        const skip = (pageOptionsDto.page - 1) * pageOptionsDto.pageSize;
+        const queryBuilder = this.tagRepository.createQueryBuilder('tag');
+
+
+        queryBuilder
+            .innerJoinAndSelect('tag.user', 'user.uid')
+            .orderBy("tag.name", pageOptionsDto.sortByName)
+            .addOrderBy("tag.sortOrder", pageOptionsDto.sortByOrder)
+            .skip(skip)
+            .take(pageOptionsDto.pageSize);
+
+        // console.log(pageOptionsDto.skip);
+        // console.log(pageOptionsDto.pageSize);
+        console.log(queryBuilder.getQuery());
+
+        const totalCount = await queryBuilder.getCount();
+        const { entities } = await queryBuilder.getRawAndEntities();
+
+        const pageMetaDto = new PageMetaDto({
+            page: pageOptionsDto.page,
+            pageSize: pageOptionsDto.pageSize,
+            quantity: totalCount
+        });
+
+        const dtoTags: GetTagByIdDto[] = entities.map(el => {
+            const dto = new GetTagByIdDto();
+            return dto.convertFromEntity(el);
+        })
+
+        return new PageDto(dtoTags, pageMetaDto);
+
+        // const pageMetaDto = new PageMetaDto({
+        //     page: pageOptionsDto.page,
+        //     pageSize: pageOptionsDto.pageSize,
+        //     quantity: totalCount
+        // });
+
+        // const dtoTags: GetTagByIdDto[] = tags.map(el => {
+        //     const dto = new GetTagByIdDto();
+        //     return dto.convertFromEntity(el);
+        // })
+
+        // return new PageDto(dtoTags, pageMetaDto);
     }
 
 
@@ -60,11 +115,6 @@ export class TagService {
         if (tag) {
             throw new HttpException(`Имя: ${name} уже занято`, HttpStatus.BAD_REQUEST);
         }
-    }
-
-
-    async findAll(): Promise<Tag[]> {
-        return await this.tagRepository.find();
     }
 
     // findOne(id: number) {

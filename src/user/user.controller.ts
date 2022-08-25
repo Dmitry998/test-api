@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-suth.guard';
 import { AuthUser } from './user.decorator';
-import { ValidationUser } from './pipes/validation-user.pipe';
+import { ValidationUser } from './pipes/validation-user.pipe'; 
 import { GetUserDto } from './dto/get-user.dto';
 
 @ApiTags('Пользователи')

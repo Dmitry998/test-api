@@ -25,7 +25,6 @@ export class Tag {
     user: User;
 
     public convertToGetDto(tag){
-        let dto = new GetTagDto();
-        
+        let dto = new GetTagDto();  
     }
 }

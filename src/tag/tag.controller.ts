@@ -6,6 +6,8 @@ import { JwtAuthGuard } from 'src/auth/jwt-suth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from 'src/user/user.decorator';
 import { User } from 'src/user/entities/user.entity';
+import { PageOptionsDto } from './dto/page-options.dto';
+import { PageDto } from './dto/page.dto';
 
 @ApiTags('Тэги')
 @ApiBearerAuth()
@@ -21,13 +23,9 @@ export class TagController {
 
     @Get()
     findAll(
-        @Query('sortByOrder') sortByOrder,
-        @Query('sortByName') sortByName,
-        @Query('offset') offset: number,
-        @Query('length') length: number,
-
+        @Query() pageOptionsDto: PageOptionsDto
     ) {
-      return this.tagService.getAll(sortByOrder, sortByName, offset, length);
+      return this.tagService.getAll(pageOptionsDto);
     }
 
     @Get(':id')

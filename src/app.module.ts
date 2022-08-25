@@ -25,7 +25,7 @@ import { AuthModule } from './auth/auth.module';
                     port: Number(process.env.POSTGRESS_PORT),
                     entities: [User, Tag],
                     autoLoadEntities: true,
-                    logging: true,
+                    logging: false, // true, чтобы выводить запросы
                     synchronize: true
                 }
             },
