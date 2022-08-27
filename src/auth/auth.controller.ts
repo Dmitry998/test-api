@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Res, UsePipes } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response, response } from 'express';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { ValidationUser } from 'src/user/pipes/validation-user.pipe';
@@ -13,6 +13,10 @@ export class AuthController {
 
     @UsePipes(ValidationUser)
     @ApiOperation({ summary: 'Регистрация' })
+    @ApiCreatedResponse({
+        description: 'Пользователь зарегистрирован',
+        type: CreateUserDto,
+    })
     @Post('signin')
     signin(@Body() createUserDto: CreateUserDto) {
         return this.authService.signin(createUserDto);

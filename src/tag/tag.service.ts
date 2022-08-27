@@ -1,8 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 // import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { GetTagByIdDto } from './dto/get-tag-by-id.dto';
 import { GetTagDto } from './dto/get-tag.dto';
@@ -49,19 +50,7 @@ export class TagService {
         return dto.convertFromEntity(tag);
     }
 
-    async getAll(pageOptionsDto: PageOptionsDto) {
-
-        // const totalCount = (await this.tagRepository.find()).length;
-
-        // const tags = await this.tagRepository.find({
-        //     relations: ['user'],
-        //     take: pageOptionsDto.pageSize,
-        //     skip: pageOptionsDto.skip,
-        //     order: {
-
-        //     }
-        // });
-
+    async getAll(pageOptionsDto: PageOptionsDto): Promise<PageDto<GetTagByIdDto>> {
 
         const skip = (pageOptionsDto.page - 1) * pageOptionsDto.pageSize;
         const queryBuilder = this.tagRepository.createQueryBuilder('tag');
@@ -74,8 +63,6 @@ export class TagService {
             .skip(skip)
             .take(pageOptionsDto.pageSize);
 
-        // console.log(pageOptionsDto.skip);
-        // console.log(pageOptionsDto.pageSize);
         console.log(queryBuilder.getQuery());
 
         const totalCount = await queryBuilder.getCount();
@@ -93,21 +80,53 @@ export class TagService {
         })
 
         return new PageDto(dtoTags, pageMetaDto);
-
-        // const pageMetaDto = new PageMetaDto({
-        //     page: pageOptionsDto.page,
-        //     pageSize: pageOptionsDto.pageSize,
-        //     quantity: totalCount
-        // });
-
-        // const dtoTags: GetTagByIdDto[] = tags.map(el => {
-        //     const dto = new GetTagByIdDto();
-        //     return dto.convertFromEntity(el);
-        // })
-
-        // return new PageDto(dtoTags, pageMetaDto);
     }
 
+    async change(updateTag: UpdateTagDto, tagId: number, uidCreator: string): Promise<GetTagByIdDto> {
+
+        let tag = await this.tagRepository.findOne({
+            relations: ['user'],
+            where: { id: tagId }
+        });
+
+        await this.userIsCreator(uidCreator, tag.user.uid);
+
+        if (tag.name != updateTag.name) {
+            await this.nameIsTaken(updateTag.name);
+        }
+
+        tag.name = updateTag.name;
+        tag.sortOrder = updateTag.sortOrder;
+
+        tag = await this.tagRepository.save(tag)
+        const dto = new GetTagByIdDto();
+        return dto.convertFromEntity(tag);
+    }
+
+    async delete(creatorId: string, tagId: number): Promise<boolean> {
+        let tag = await this.tagRepository.findOne({
+            relations: ['user'],
+            where: { id: tagId }
+        });
+
+        await this.userIsCreator(creatorId, tag.user.uid);
+
+        await this.tagRepository.delete(tagId);
+
+        // const user = this.userRepository.findOne({
+        //     relations: [],
+        //     where:
+        // })
+
+        return true;
+    }
+
+    async userIsCreator(uidCreator: string, uidTag: string){
+        if (uidCreator != uidTag) {
+            throw new HttpException(`Только создатель может изменять или удалять тэг`, HttpStatus.BAD_REQUEST);
+        }
+
+    }
 
     async nameIsTaken(name: string): Promise<void> {
         const tag = await this.tagRepository.findOneBy({ name: name });
@@ -116,16 +135,4 @@ export class TagService {
             throw new HttpException(`Имя: ${name} уже занято`, HttpStatus.BAD_REQUEST);
         }
     }
-
-    // findOne(id: number) {
-    //     return `This action returns a #${id} tag`;
-    // }
-
-    // update(id: number, updateTagDto: UpdateTagDto) {
-    //     return `This action updates a #${id} tag`;
-    // }
-
-    // remove(id: number) {
-    //     return `This action removes a #${id} tag`;
-    // }
 }

@@ -6,15 +6,15 @@ import { GetTagDto } from "../dto/get-tag.dto";
 @Entity('tag')
 export class Tag {
 
-    @ApiProperty({example: '1', description: 'id'})
+    @ApiProperty({ example: '1', description: 'id' })
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ApiProperty({example: 'Name', description: 'Название тэга'})
+    @ApiProperty({ example: 'Name', description: 'Название тэга' })
     @Column({ length: 40 })
     name: string;
 
-    @ApiProperty({example: 0, description: 'Сортировка'})
+    @ApiProperty({ example: 0, description: 'Сортировка' })
     @Column({
         default: 0
     })
@@ -24,7 +24,8 @@ export class Tag {
     @JoinColumn({ name: 'creator' })
     user: User;
 
-    public convertToGetDto(tag){
-        let dto = new GetTagDto();  
+    public convertToGetDto(tag) {
+        let dto = new GetTagDto();
     }
+
 }
