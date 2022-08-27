@@ -8,6 +8,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-suth.guard';
 import { AuthUser } from './user.decorator';
 import { ValidationUser } from './pipes/validation-user.pipe'; 
 import { GetUserDto } from './dto/get-user.dto';
+import { Auth } from 'src/auth/auth.decorator';
 
 @ApiTags('Пользователи')
 @ApiBearerAuth()
@@ -41,8 +42,8 @@ export class UserController {
 
     @Delete()
     @ApiOperation({ summary: 'Удаление авторизованного пользователя' })
-    delete(@AuthUser() user: User){
-        return this.userService.deleteUser(user.uid);
+    delete(@AuthUser() user: User, @Auth() token){
+        return this.userService.deleteUser(user.uid, token);
     }
 
     // @Patch(':id')

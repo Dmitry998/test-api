@@ -6,6 +6,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import * as bcryptjs from 'bcryptjs';
 import { GetUserDto } from './dto/get-user.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { Token } from 'src/auth/entities/token.entity';
 
 @Injectable()
 export class UserService {
@@ -13,6 +15,7 @@ export class UserService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        // private readonly authService: AuthService
     ) { }
 
     public async findAll(): Promise<User[]> {
@@ -64,8 +67,9 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
-    public async deleteUser(uid: string): Promise<void> {
+    public async deleteUser(uid: string, token: string): Promise<void> {
         await this.userRepository.delete({ uid: uid });
+        // await this.authService.logout(token);
         //плюс надо разлогинить
     }
 
