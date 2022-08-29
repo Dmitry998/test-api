@@ -9,6 +9,7 @@ import { AuthUser } from './user.decorator';
 import { ValidationUser } from './pipes/validation-user.pipe'; 
 import { GetUserDto } from './dto/get-user.dto';
 import { Auth } from 'src/auth/auth.decorator';
+import { AddTagForUserDto } from './dto/add-tag-for-user.dto';
 
 @ApiTags('Пользователи')
 @ApiBearerAuth()
@@ -44,6 +45,24 @@ export class UserController {
     @ApiOperation({ summary: 'Удаление авторизованного пользователя' })
     delete(@AuthUser() user: User, @Auth() token){
         return this.userService.deleteUser(user.uid, token);
+    }
+
+    @Post('/tag')
+    @ApiOperation({ summary: 'Добавление новых тэгов для пользователя' })
+    addTagsForUser(@AuthUser() user: User, @Body() dto: AddTagForUserDto){
+        return this.userService.addTagsForUser(dto.tags, user);
+    }
+
+    @Delete('/tag/:id')
+    @ApiOperation({ summary: 'Удаление тэга пользователя' })
+    deleteUserTag(@AuthUser() user: User, @Param('id') id: number){
+        return this.userService.deleteUserTag(id, user);
+    }
+
+    @Get('tag/my')
+    @ApiOperation({ summary: 'Получение тэгов пользователя' })
+    getTagsWhereUserIsCreator(@AuthUser() user: User){
+        return this.userService.getTagsWhereUserIsCreator(user);
     }
 
     // @Patch(':id')

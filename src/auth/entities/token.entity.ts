@@ -3,7 +3,7 @@ import { User } from "src/user/entities/user.entity";
 import { Column, Entity, JoinColumn,ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('token')
-export class Token {
+export class TokenBlackList {
 
     @PrimaryGeneratedColumn()
     id: number;

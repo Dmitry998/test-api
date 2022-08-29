@@ -7,7 +7,8 @@ import { User } from './entities/user.entity';
 import * as bcryptjs from 'bcryptjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { AuthService } from 'src/auth/auth.service';
-import { Token } from 'src/auth/entities/token.entity';
+import { Tag } from 'src/tag/entities/tag.entity';
+import { UserTagsDto } from './dto/user-tags.dto';
 
 @Injectable()
 export class UserService {
@@ -15,6 +16,8 @@ export class UserService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @InjectRepository(Tag)
+        private readonly tagRepository: Repository<Tag>
         // private readonly authService: AuthService
     ) { }
 
@@ -29,16 +32,16 @@ export class UserService {
             where: { uid: uid }
         });
 
-        if(!user){
+        if (!user) {
             throw new HttpException('Пользователя не существует', HttpStatus.NOT_FOUND);
         }
 
         return user;
     }
 
-    public async update(updateUserDto: UpdateUserDto, uid: string){
-        const user = await this.userRepository.findOneBy({uid: uid});
-        if(!user){
+    public async update(updateUserDto: UpdateUserDto, uid: string) {
+        const user = await this.userRepository.findOneBy({ uid: uid });
+        if (!user) {
             throw new HttpException('Пользователя не существует', HttpStatus.NOT_FOUND);
         }
 
@@ -51,10 +54,10 @@ export class UserService {
             throw new HttpException('Пользователь с таким nickname уже существует', HttpStatus.BAD_REQUEST);
         }
 
-        if(updateUserDto.password){
+        if (updateUserDto.password) {
             updateUserDto.password = await this.hashPassword(updateUserDto.password);
         }
-        
+
         const dto: GetUserDto = new GetUserDto();
         return dto.convertFromEntity(await this.userRepository.save({ ...user, ...updateUserDto }));
     }
@@ -83,7 +86,50 @@ export class UserService {
         return user;
     }
 
-    private async hashPassword(password: string, salt=5): Promise<string> {
+    public async addTagsForUser(tags: number[], user: User) {
+
+        const tagEntities: Tag[] = [];
+
+        for (let i = 0; i < tags.length; i++) {
+            const tagId = tags[i];
+            const tag = await this.tagRepository.findOneBy({ id: tagId });
+            if (!tag) {
+                throw new HttpException(`Тэга с id=${tagId} не существует`, HttpStatus.BAD_REQUEST);
+            }
+            tagEntities.push(tag);
+        }
+
+        let userEntity = await this.userRepository.findOne({ relations: ['tags'], where: { uid: user.uid } });
+        for (let i = 0; i < tagEntities.length; i++) {
+            userEntity.tags.push(tagEntities[i]);
+        }
+        userEntity = await this.userRepository.save(userEntity);
+
+        const dto = new UserTagsDto(userEntity.tags);
+        return dto;
+    }
+
+    public async deleteUserTag(tagId: number, user: User) {
+        const userEntity = await this.userRepository.findOne({ relations: ['tags'], where: { uid: user.uid } });
+        const resultTags = userEntity.tags.filter(t => t.id != tagId);
+
+        console.log(resultTags);
+        userEntity.tags = resultTags;
+        await this.userRepository.save(userEntity);
+        const dto = new UserTagsDto(userEntity.tags);
+        return dto;
+    }
+
+    public async getTagsWhereUserIsCreator(user: User) {
+
+        const queryBuilder = this.tagRepository.createQueryBuilder('tag');
+        queryBuilder.where('tag.user=:creator', { creator: user.uid });
+        const { entities } = await queryBuilder.getRawAndEntities();
+        const dto = new UserTagsDto(entities);
+        return dto;
+    }
+
+    private async hashPassword(password: string, salt = 5): Promise<string> {
         const hashPassword = await bcryptjs.hash(password, salt);
         return hashPassword;
     }

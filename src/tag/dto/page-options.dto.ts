@@ -40,8 +40,6 @@ export class PageOptionsDto {
   get skip(): number {
     console.log('page',this.page);
     console.log('pageSize', this.pageSize);
-
-
     return (+this.page - 1) * +this.pageSize;
   }
 }

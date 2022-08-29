@@ -6,17 +6,17 @@ import { TokenDto } from './dto/token.dto';
 import { User } from 'src/user/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import * as bcryptjs from 'bcryptjs';
-import { Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Token } from './entities/token.entity';
+import { TokenBlackList } from './entities/token.entity';
 
 @Injectable()
 export class AuthService {
 
     constructor(
-        @InjectRepository(Token)
-        private readonly tokenRepository: Repository<Token>,
+        @InjectRepository(TokenBlackList)
+        private readonly tokenRepository: Repository<TokenBlackList>,
+
         private userService: UserService,
         private jwtService: JwtService
     ) { }
@@ -46,7 +46,7 @@ export class AuthService {
         return this.generateToken(user);
     }
 
-    public async logout(tokenValue: string): Promise<Token> {
+    public async logout(tokenValue: string): Promise<TokenBlackList> {
         const token = await this.tokenRepository.create({value: tokenValue});
         return await this.tokenRepository.save(token);
     }
@@ -70,26 +70,5 @@ export class AuthService {
         }
         return tokenDto;
     }
-
-
-    // private async checkTokenInBlackList(){
-    //     const req = context.switchToHttp().getRequest();
-    //     try {
-    //         const authHeader = req.headers.authorization;
-    //         const bearer = authHeader.split(' ')[0];
-    //         const token = authHeader.split(' ')[1];
-
-    //         if (bearer !== 'Bearer' || !token) {
-    //             throw new UnauthorizedException({ message: 'Пользователь не авторизован' })
-    //         }
-
-    //         const user = this.jwtService.verify(token);
-    //         req.user = user;
-    //         return true;
-
-    //     } catch (e) {
-    //         throw new UnauthorizedException({ message: 'Пользователь не авторизован' })
-    //     }
-    // }
 
 }

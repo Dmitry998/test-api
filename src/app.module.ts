@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './user/entities/user.entity';
 import { Tag } from './tag/entities/tag.entity';
 import { AuthModule } from './auth/auth.module';
-import { Token } from './auth/entities/token.entity';
+import { TokenBlackList } from './auth/entities/token.entity';
 
 @Module({
     imports: [
@@ -24,9 +24,9 @@ import { Token } from './auth/entities/token.entity';
                     password: `${process.env.POSTGRESS_PASSWORD}`,
                     database: process.env.POSTGRES_DB,
                     port: Number(process.env.POSTGRESS_PORT),
-                    entities: [User, Tag, Token],
+                    entities: [User, Tag, TokenBlackList],
                     autoLoadEntities: true,
-                    logging: false, // true, чтобы выводить запросы
+                    logging: true, // true, чтобы выводить запросы
                     synchronize: true
                 }
             },

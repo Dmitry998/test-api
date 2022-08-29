@@ -5,21 +5,23 @@ import { UserModule } from 'src/user/user.module';
 import { UserService } from 'src/user/user.service';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Token } from './entities/token.entity';
+import { TokenBlackList } from './entities/token.entity';
+import { TagModule } from 'src/tag/tag.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Token]),
-        forwardRef(() => UserModule),
+        TypeOrmModule.forFeature([TokenBlackList]),
         JwtModule.register({
             secret: process.env.PRIVATE_KEY || 'SECRET'
-        })
+        }),
+        forwardRef(() => UserModule),
+        forwardRef(() => TagModule)
     ],
+    controllers: [AuthController],
+    providers: [AuthService],
     exports: [
         AuthService,
         JwtModule
     ],
-    controllers: [AuthController],
-    providers: [AuthService]
 })
 export class AuthModule { }
